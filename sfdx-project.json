@@ -5,7 +5,7 @@
       "default": true
     }
   ],
-  "name": "git-test-project",
+  "name": "github-test1",
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "52.0"

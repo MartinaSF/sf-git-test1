@@ -1,8 +1,6 @@
 name: Run Apex Test Classes
-
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
- pull_request:
+  pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
 
@@ -10,13 +8,11 @@ env:
   DEV_USERNAME: ${{ secrets.USERNAME }}
   DEV_CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
   SALESFORCE_JWT_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:  
   run-tests: 
     runs-on: ubuntu-latest
 
-      steps:
+    steps:
       - name: Install Salesforce CLI
         run: |
           wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
