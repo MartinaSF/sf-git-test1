@@ -1,0 +1,59 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  DEV_USERNAME: ${{ secrets.USERNAME }}
+  DEV_CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
+  SALESFORCE_JWT_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:  
+  run-tests: 
+    runs-on: ubuntu-latest
+
+      steps:
+      - name: Install Salesforce CLI
+        run: |
+          wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
+          mkdir sfdx-cli
+          tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
+          ./sfdx-cli/install
+      - name: Checkout Develop source code
+        uses: actions/checkout@v2
+        with:
+          ref: "main"
+          path: env
+      - name: Checkout source code
+        uses: actions/checkout@v2
+        with:
+          path: main
+      # - name: Set environment variable
+      #   run: |
+      #     cat ./env/.github/workflows/env | grep DEV_CONSUMER_KEY= | grep -o '".*"' | sed 's/"//g' > ./main/DEV_CONSUMER_KEY
+      #     cat ./env/.github/workflows/env | grep DEV_USERNAME= | grep -o '".*"' | sed 's/"//g' > ./main/DEV_USERNAME
+      - name: Convert metadata to mdapi format
+        run: |
+          cd main
+          sfdx force:source:convert --sourcepath "force-app" --outputdir metadatadeploy
+      - name: Authenticate Org
+        shell: bash
+
+        run: | 
+          echo "${SALESFORCE_JWT_SECRET_KEY}" > server.key
+          sfdx auth:jwt:grant -f ./server.key -a DevOrg -i "${DEV_CONSUMER_KEY}" -u "${DEV_USERNAME}" -r https://login.salesforce.com
+      - name: Run tests
+        run: |
+          cd main
+          sfdx force:source:deploy -w 30 -c -l NoTestRun -u DevOrg --manifest metadatadeploy/package.xml --verbose 
